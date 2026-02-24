@@ -2,7 +2,7 @@
 
 from fastapi import FastAPI, HTTPException, Request, Depends
 from fastapi.responses import JSONResponse
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials, OAuth2PasswordRequestForm
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
 import httpx
@@ -68,16 +68,20 @@ async def http_exception_handler(request: Request, exc: HTTPException):
     )
 
 # ==============================
-# LOGIN ENDPOINT
+# LOGIN ENDPOINT (With Username & Password)
 # ==============================
 
 @app.post("/login")
-def login():
-    access_token = create_access_token({"sub": "admin"})
+def login(form_data: OAuth2PasswordRequestForm = Depends()):
+
+    if form_data.username != "admin" or form_data.password != "1234":
+        raise HTTPException(status_code=401, detail="Incorrect username or password")
+    
+    access_token = create_access_token({"sub": form_data.username})
     return {"access_token": access_token, "token_type": "bearer"}
 
 # ==============================
-# SERVICES & ROUTING
+# SERVICES & ROUTING (Activity 1)
 # ==============================
 
 SERVICES = {
