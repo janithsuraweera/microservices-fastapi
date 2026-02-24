@@ -6,6 +6,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
 import httpx
+import time
 from typing import Any
 
 app = FastAPI(title="API Gateway", version="1.0.0")
@@ -33,6 +34,23 @@ def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
         return payload
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid or expired token")
+
+# ==============================
+# LOGGING MIDDLEWARE
+# ==============================
+
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    start_time = time.time()
+    
+    print(f"Incoming Request: {request.method} {request.url}")
+    
+    response = await call_next(request)
+    
+    process_time = time.time() - start_time
+    print(f"Completed in {process_time:.4f}s | Status: {response.status_code}")
+    
+    return response
 
 # ==============================
 # LOGIN ENDPOINT
