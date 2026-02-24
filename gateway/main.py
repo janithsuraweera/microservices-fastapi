@@ -155,7 +155,7 @@ async def delete_student(student_id: int):
     return await forward_request("student", f"/api/students/{student_id}", "DELETE")
 
 # ==============================
-# COURSE ROUTES (PROTECTED) - Activity 1
+# COURSE ROUTES (PROTECTED) 
 # ==============================
 
 @app.get("/gateway/courses", dependencies=[Depends(verify_token)])
