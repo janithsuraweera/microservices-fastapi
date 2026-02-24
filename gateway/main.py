@@ -12,7 +12,7 @@ from typing import Any
 app = FastAPI(title="API Gateway", version="1.0.0")
 
 # ==============================
-# JWT CONFIGURATION
+# JWT CONFIGURATION (Activity 2)
 # ==============================
 
 SECRET_KEY = "mysecretkey"
@@ -36,7 +36,7 @@ def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
         raise HTTPException(status_code=401, detail="Invalid or expired token")
 
 # ==============================
-# LOGGING MIDDLEWARE
+# LOGGING MIDDLEWARE (Activity 3)
 # ==============================
 
 @app.middleware("http")
@@ -53,6 +53,21 @@ async def log_requests(request: Request, call_next):
     return response
 
 # ==============================
+# GLOBAL ERROR HANDLER (Activity 4)
+# ==============================
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "error": exc.detail,
+            "status_code": exc.status_code,
+            "message": "This error was handled by the API Gateway"
+        }
+    )
+
+# ==============================
 # LOGIN ENDPOINT
 # ==============================
 
@@ -62,7 +77,7 @@ def login():
     return {"access_token": access_token, "token_type": "bearer"}
 
 # ==============================
-# SERVICES
+# SERVICES & ROUTING
 # ==============================
 
 SERVICES = {
@@ -88,6 +103,10 @@ async def forward_request(service: str, path: str, method: str, **kwargs) -> Any
                 response = await client.delete(url, **kwargs)
             else:
                 raise HTTPException(status_code=405, detail="Method not allowed")
+
+            # Handle Microservice level errors gracefully
+            if response.status_code >= 400:
+                raise HTTPException(status_code=response.status_code, detail=response.text)
 
             return JSONResponse(
                 content=response.json() if response.text else None,
@@ -132,7 +151,7 @@ async def delete_student(student_id: int):
     return await forward_request("student", f"/api/students/{student_id}", "DELETE")
 
 # ==============================
-# COURSE ROUTES (PROTECTED)
+# COURSE ROUTES (PROTECTED) - Activity 1
 # ==============================
 
 @app.get("/gateway/courses", dependencies=[Depends(verify_token)])
